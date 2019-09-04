@@ -1,0 +1,149 @@
+---
+title: "Practica 5"
+output: html_document
+---
+
+#Ejercicio 1
+```{r}
+c.table<-array(data = c(251, 48, 34, 5), dim = c(2,2), dimnames = 
+                 list(Primero = c("exito", "fracaso"),Segundo = c("exito", "fracaso")))
+c.table
+pi.hat.table<-c.table/rowSums(c.table)
+
+alpha<-0.05
+pi.hat1<-pi.hat.table[1,1]
+pi.hat2<-pi.hat.table[2,1]
+
+```
+
+Riesgo relativo con su intervalo de confianza  
+```{r}
+ 
+RR<-round(pi.hat1/pi.hat2, 4)
+RR
+
+# Intervalo de confianza de Wald
+var.log.rr <- 1/c.table[1,1] - 1/sum(c.table[1,]) + 1/c.table[2,1] - 1/sum(c.table[2,])
+ci<-exp(log(pi.hat1/pi.hat2) + qnorm(p = c(alpha/2, 1-alpha/2)) * sqrt(var.log.rr))
+round(ci, 4)
+```
+
+Razon de momios con su intervalo de confianza
+```{r}
+#Razon de momios 
+OR.hat<-c.table[1,1]*c.table[2,2] / (c.table[2,1]*c.table[1,2])
+OR<-round(OR.hat, 4)
+OR
+
+
+#Intervalo de confianza 
+var.log.or<-1/c.table[1,1] + 1/c.table[1,2] + 1/c.table[2,2] + 1/c.table[2,1]
+OR.CI<-exp(log(OR.hat) + qnorm(p = c(alpha/2, 1-alpha/2)) * sqrt(var.log.or))
+round(OR.CI, 4)
+```
+
+El riesgo relativo en este ejercicio es de 0.9724, como es cercano a 1 se puede decir que las probabilidades de exito es casi la misma para ambos grupos, en este caso es que exista exito o fracaso en el primer lanzamiento Sin embargo, al observar la raz??n de momios nos da un valor menor a uno por lo que las probabilidades de tener exito en el segundo tiro son mayores una vez que fracaso en el primer lanzamiento.
+
+
+
+#Ejercicio 2
+
+a) Intervalo de confianza de Wald y Agresti- Caffo
+```{r}
+nfl.table<-array(data = c(22,10,4,6), dim = c(2,2), dimnames =list( Estrategia = c("sin tiempo fuera","tiempo fuera"), "Gol de campo" = c("exito", "fracaso")))
+nfl.table
+pi.hat.table<-nfl.table/rowSums(nfl.table)
+pi.hat.table
+
+alpha<-0.05
+pi.hat1<-pi.hat.table[1,1]
+pi.hat2<-pi.hat.table[2,1]
+
+
+```
+
+```{r}
+# Wald
+var.wald<-pi.hat1*(1-pi.hat1) / sum(nfl.table[1,]) + pi.hat2*(1-pi.hat2) / sum(nfl.table[2,])
+pi.hat1 - pi.hat2 + qnorm(p = c(alpha/2, 1-alpha/2)) * sqrt(var.wald)
+```
+```{r}
+# Agresti-Caffo
+pi.tilde1<-(nfl.table[1,1]+1)/(sum(nfl.table[1,])+2)
+pi.tilde2<-(nfl.table[2,1]+1)/(sum(nfl.table[2,])+2)
+var.AC<-pi.tilde1*(1-pi.tilde1) / (sum(nfl.table[1,])+2) + pi.tilde2*(1-pi.tilde2) / (sum(nfl.table[2,])+2)
+pi.tilde1 - pi.tilde2 + qnorm(p = c(alpha/2, 1-alpha/2)) * sqrt(var.AC)
+```
+El intervalo de confianza de Wald tiene valores similares a los de Agresti Caffo, sin embargo es recomendable usar el intervalo de Agresti, ya que el intervalo de Wald es comunmente menor de lo  deseado y se encuentran alejados del nivel de confianza. 
+
+b) Prueba score, ji-cuadrada de Pearson y prueba LRT
+```{r}
+#Prueba score
+pi.hat1<-pi.hat.table[1,1]
+pi.hat2<-pi.hat.table[2,1]
+pi.bar<-colSums(nfl.table)[1]/sum(nfl.table)
+Z<-(pi.hat1-pi.hat2)/sqrt((pi.bar*(1-pi.bar)*(1/sum(nfl.table[1,])+1/sum(nfl.table[2,]))))
+crit.val<-qnorm(p = 0.95)
+round(data.frame(pi.bar,Z, crit.val, row.names = NULL), 4)
+
+```
+
+```{r}
+library(vcd)
+assocstats(x = nfl.table)
+```
+
+```{r}
+#Prueba LRT
+
+log.Lambda<-nfl.table[1,1]*log(pi.bar/pi.hat.table[1,1])+ nfl.table[1,2]*log((1-pi.bar)/(1-pi.hat.table[1,1])) +nfl.table[2,1]*log(pi.bar/pi.hat.table[2,1]) + nfl.table[2,2]*log((1-pi.bar)/(1-pi.hat.table[2,1]))
+test.stat<--2*log.Lambda
+crit.val<-qchisq(p = 0.95, df = 1)
+p.val<-1-pchisq(q = test.stat, df = 1)
+round(data.frame(pi.bar, test.stat, crit.val, p.val, row.names = NULL), 4)
+```
+
+
+c)Riesgo relativo y razon de momios
+
+```{r}
+RR.nfl<-round(pi.hat1/pi.hat2, 4)
+RR.nfl
+
+# Intervalo de confianza de Wald
+var.log.rrnfl <- 1/nfl.table[1,1] - 1/sum(nfl.table[1,]) + 1/nfl.table[2,1] - 1/sum(nfl.table[2,])
+c.nfl<-exp(log(pi.hat1/pi.hat2) + qnorm(p = c(alpha/2, 1-alpha/2)) * sqrt(var.log.rrnfl))
+round(c.nfl, 4)
+```
+La intepretacion del riesgo relativo es que la posibilidad de lograr un gol de campo sin tiempo fuera es 1.3538 veces, 135.38% mayor si el equipo contrario pide tiempo fuera con un intervalo de confianza que oscila ente .8954 y 2.0470 
+
+
+Razon de momios
+```{r}
+#Razon de momios 
+OR.hat.nfl<-nfl.table[1,1]*nfl.table[2,2] / (nfl.table[2,1]*nfl.table[1,2])
+OR.nfl<-round(OR.hat.nfl, 4)
+OR.nfl
+
+
+#Intervalo de confianza 
+var.log.or.nfl<-1/nfl.table[1,1] + 1/nfl.table[1,2] + 1/nfl.table[2,2] + 1/nfl.table[2,1]
+OR.nfl<-exp(log(OR.hat.nfl) + qnorm(p = c(alpha/2, 1-alpha/2)) * sqrt(var.log.or.nfl))
+round(OR.nfl, 4)
+```
+El momio de anotar un gol de campo sin tiempo fuera es 3.3 veces mayor que cuando existe tiempo fuera. Se est? 95% seguro que el intervalo (0.7592,14.3450) contiene la verdadera razon de momios. En resumen, no pedir tiempo fuera aumenta el momio de anotar un gol de campo por 330%
+
+d) 
+Es claro que "enfriar al pateador" se puede considerar como una buena estrategia para que el jugador no consiga un gol de campo, en la tabla pi.hat.table se puede observar que las probabilidades de fracaso si existe tiempo fuera aumentan de 0.15 a .37 
+
+
+#Ejercicio 3
+Si en una tabla de contingencia uno de los conteos tiene un valor igual a cero, para calcular el riesgo relativo y la razon de momios va a ser necesario sumarle una constante de 0.5 a w1, w2, n1 y n2 en la formula de razon de momios.Para el caso del riesgo relativo, sabemos que el riesgo relativo tiene relacion con la razon de momios donde este es igual al riesgo relativo multiplicado por (1-p2)/(1-p1) donde p2 y p1 son las probabilidades de exito de dos grupos. Por lo tanto para calcular el riesgo relativo de igual manera es necesario a?adir la constante igual de 0.5
+
+
+
+
+
+
+
+

@@ -1,0 +1,92 @@
+---
+title: "Pr??ctica 9"
+author: "Eva Mar??a L??pez"
+date: "6/5/2018"
+output: html_document
+---
+
+#a
+
+```{r}
+ 
+cereal <- read.csv("~/Desktop/cereal_dillons.csv")
+stand01 <- function( x ) { ( x - min( x ) ) /( max( x ) - min( x ) ) }
+cereal2 <- data.frame( Shelf = cereal$Shelf ,
+sugar = stand01( x = cereal$sugar_g / cereal$size_g ) ,
+  
+fat = stand01( x = cereal$fat_g / cereal$size_g ) ,
+  
+sodium = stand01( x = cereal$sodium_mg / cereal$size_g ) )
+```
+
+#b
+
+Gr??fico de sugar
+```{r}
+boxplot(formula = sugar~Shelf , data = cereal2 ,
+ylab = "Sugar" , xlab = "Shelf" , pars = list( outpch = NA ) )
+stripchart( x = cereal2$sugar  ~ cereal2$Shelf , lwd = 2 ,
+col="red" , method = "jitter" , vertical = TRUE ,
+pch = 1 , add = TRUE )
+```
+
+Gr??fico de fat
+```{r}
+boxplot(formula = fat~Shelf , data = cereal2 ,
+ylab = "Fat" , xlab = "Shelf" , pars = list( outpch = NA ) )
+stripchart( x = cereal2$fat  ~ cereal2$Shelf , lwd = 2 ,
+col="red" , method = "jitter" , vertical = TRUE ,
+pch = 1 , add = TRUE )
+```
+
+Gr??fico de sodium
+```{r}
+boxplot(formula = sodium~Shelf , data = cereal2 ,
+ylab = "Sodium" , xlab = "Shelf" , pars = list( outpch = NA ) )
+stripchart( x = cereal2$sodium ~  cereal2$Shelf , lwd = 2 ,
+col="red" , method = "jitter" , vertical = TRUE ,
+pch = 1 , add = TRUE )
+```
+
+
+#c
+La variable dependiente puede tener importancia el orden si se desea saber  que cereal se consume m??s y si la ubicaci??n del cereal de acuerdo al estante en que se encuentre influye en las ventas.
+
+#d
+
+```{r}
+
+library(nnet)
+library(car)
+
+# Estimaci??n del modelo
+mod.fit.nom<-multinom(formula = Shelf~sugar +fat+sodium, data = cereal2)
+summary(mod.fit.nom)
+
+
+# LRT
+Anova(mod.fit.nom)
+
+```
+#e 
+
+```{r}
+mod.fit.nom.inter<-multinom(formula = Shelf ~  sugar + fat + sodium+sugar:fat+sugar:sodium+ sodium:fat, data = cereal2)
+summary(mod.fit.nom.inter)
+
+Anova(mod.fit.nom.inter)
+
+```
+
+Debido a que las variables donde existe interacci??n entre las variables presentan un valor mayor al grado de significancia (0.05) en la prueba LRT se puede concluir que no hay interaccion entre variables independientes y no son de importancia en el modelo.
+
+#f
+```{r} 
+round(exp(-coefficients(mod.fit.nom)), 2)
+round(1/exp(-coefficients(mod.fit.nom)), 2)
+conf.beta<-confint(object = mod.fit.nom, level = 0.95)
+conf.beta
+
+
+```
+

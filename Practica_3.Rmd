@@ -1,0 +1,122 @@
+---
+title: "Practica 3"
+output: html_document
+---
+
+
+```{r}
+#Ejercicio 1 listo
+f_abs<-function(number1,number2)
+{
+  operacion<-abs(number1-number2)
+  return (operacion)
+}
+```
+
+
+```{r}
+#Ejercicio 2 listo
+f_logic<-function(valor, vec) 
+{
+ ToF<-valor==vec
+if (any(ToF!=FALSE)){return(TRUE)}
+ else {}
+if(i<=length(vec))
+   {
+    return(FALSE)
+   }
+
+}
+```
+
+
+```{r}
+#Ejercicio 3 listo
+f_tipo_dato<-function(dataframe)
+{
+  
+ data_frame<-dataframe
+  i<-1
+  while (i<=length(data_frame))
+  {
+    C<-paste(names(data_frame[i]), "es de tipo",mode(data_frame[,i]))
+    i<-i+1
+    cat(C,"\n")
+  }
+  
+}
+
+```
+
+
+```{r}
+#Ejercicio 4 listo
+funico<-function(vec_uni)
+  {
+row_dup<-duplicated(vec_uni)
+uni_row<-vec_uni[!row_dup]
+return(uni_row)
+   }
+```
+
+```{r}
+#Ejercicio 5 listo
+f_buscar<-function(vselec, numero)
+{
+dup<-vselec==numero
+       if(any(dup)==FALSE)
+      {
+       return("El numero no se encuentra en el vector ") 
+       }  
+     else
+     {
+       rep<-subset(vselec,vselec==numero)
+         
+         return(paste("El numero",numero,"se repite",length(rep),"veces"))
+         
+     }
+  
+}
+```
+
+```{r}
+#Ejercicio 6 
+f_est<-function(v_est,opcion_mediana=FALSE)
+{
+  media<-mean(v_est)
+  desv<-sd(v_est)
+  mediana<-median(v_est)
+  if (opcion_mediana==TRUE)
+  {
+ 
+  return(paste("Media:",media," Desviacion estandar:",desv," Mediana:",mediana ))
+  }
+  else
+ {
+   return(paste("Media:",media," Desviacion estandar:",desv))   
+   }
+}
+```
+
+```{r}
+#Ejercicio 7 
+f_divisores<-function(n)
+{
+  contador<-0
+  i<-2
+  while(i<=n/2)
+  {
+    if(n%%i==0)
+    {
+      contador=contador+1
+      cat(i,"\n")
+    }
+    i<-i+1
+  }
+  return(paste(n,"tiene",contador,"divisores distintos de 1 y de si mismo"))
+
+}
+
+```
+f_divisores(13)
+

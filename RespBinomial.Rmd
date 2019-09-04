@@ -1,0 +1,200 @@
+---
+title: "Análisis de respuestas binarias"
+author: "MCP"
+date: "19 de febrero de 2018"
+output:
+  pdf_document:
+    includes:
+      in_header: mystyles.sty
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Distribución Binomial
+Consideremos una variable aleatoria binomial que cuenta el número de éxitos de un experimento repetido $n=5$ veces, y supongamos que la probabilidad de éxito es $\pi=0.6$. Se puede calcular la probabilidad de cada número de éxitos $w=0,1,2,3,4,5$. Por ejemplo, la probabilidad de $1$ éxito en $5$ intentos es
+$$ P(W=1)=\binom{5}{1}(0.6)^1 (1-0.6)^{5-1}=0.0768 $$
+En R se usa la función "dbinom()"
+```{r}
+dbinom( x = 1 , size = 5, prob = 0.6 )
+```
+Podemos encontrar las probabilidades $w=0, \dots,5$ cambiando el argumento $x$ 
+```{r}
+dbinom(0:5, 5, 0.6)
+```
+Para representar los datos de manera m\'as descriptiva:
+```{r}
+prob <- dbinom( x = 0:5 , size = 5 , prob = 0.6)
+prob_df <- data.frame( w = 0:5 , prob = round( x = prob , digits = 4) )
+prob_df
+```
+Graficamos:
+```{r}
+pdf(file = "Figure1.1.pdf", width = 6, height = 6, colormodel = "cmyk") 
+plot( x = prob_df$w , y = prob_df$prob , type = "h" , xlab = "w" , ylab ="P( W = w )" , main = 
+        "Gráfica de una dist. binomial para n =5 , pi =0.6" , panel.first = grid( col = "gray"
+  , lty = "dotted") , lwd = 3)
+abline(h=0)
+dev.off()
+```
+De forma alterna:
+```{r}
+plot(x = prob_df$w, y = prob_df$prob, type = "h", xlab = "w", ylab = "P(W=w)", main = 
+       expression(paste("Gráfica de una distribución binomial para ", italic(n) == 5, " y ",
+      italic(pi) == 0.6)), panel.first = grid(col="gray", lty="dotted"), lwd = 3)
+```
+
+## ¿Cuáles son nuestras hipótesis?
+
+La distribución binomial es un modelo rasonable para la distribución de éxitos en un número dado de ensayos siempre y cuando se satisfagan ciertas condiciones, a saber:
+\begin{enumerate}
+  \item \emph{Hay $n$ ensayos id\'enticos}. \\
+    La acci\'on que resulta en el ensayo y la medida tomada deben ser las mismas en cada     ensayo.
+  \item \emph{Existen dos posibles resultados para cada ensayo}.
+  \item \emph{Los ensayos son independientes unos de otros}.
+    No existe factor alguno en la ejecución de los ensayos que pueda causar que un subconjunto de los ensayos se comporte de manera similar a otro. 
+  \item \emph{La probabilidad de \'exito permanece constante para cada ensayo}.
+  \item \emph{La variable aleatoria de inter\'es $W$ es el n\'umero de \'exitos}.
+\end{enumerate}
+
+## Simulación de una muestra binomial
+
+Simularemos $1000$ osbervaciones aleatorias de $W$ a partir de una distribución binomial con $\pi = 0.6$ y $n=5$.
+```{r}
+set.seed(4848)
+bin5<-rbinom(n = 1000, size = 5, prob = 0.6)
+bin5[1:10]
+```
+En la teoría
+$$ E(W)=n \pi = 5(0.6)=3  $$
+$$ Var(W)=n \pi (1- \pi)=5(0.6)(0.4)=1.2  $$
+Calculamos media y varianza muestrales:
+```{r}
+mean(bin5)
+var(bin5)
+```
+Por supuesto, se esperarían valores más cercanos a los poblacionales con un tamaño de muestra mayor.
+
+Para tratar de ver qué tan bien la distribución observada sigue a la binomial, usamos "table()" para encontrar las frecuencias de cada posible respuesta y luego utilizamos "hist()" para graficar un histograma de frecuencias relativas.
+```{r}
+table(x = bin5)
+# Histograma de frecuencias relativas
+#hist(x = bin5, main = "Binomial con n=5, pi=0.6, 1000 observaciones", probability = TRUE,
+     #ylab = "Relative frequency")  # La columna de la izquierda no se despliega correctamente
+hist(x = bin5, main = "Binomial con n=5, pi=0.6, 1000 observaciones", probability = TRUE,
+  breaks = c(-0.5:5.5), ylab = "Frecuencia relativa")
+```
+
+De otra manera
+```{r}
+save.count<-table(bin5)
+save.count
+barplot(height = save.count, names = c("0", "1", "2", "3", "4", "5"), main = "Binomial con
+        n=5, pi=0.6, 1000 observaciones", xlab = "x")
+```
+
+## Inferencia para la probabilidad de éxito
+
+El objetivo es estimar y hacer inferencias acerca de la probabilidad del parámetro $\pi$ de la distribución de Bernoulli. 
+
+\textbf{Estimaci\'on e inferencia de m\'axima verosimilitud  }
+
+La función de verosimilitud es una función de uno o más parámetros condicionados a los datos observados. La función de verosimilitud para $\pi$ cuando $y_1, \cdots, y_n$ son observaciones de una distribución de Bernoulli es
+$$ L(\pi \vert y_1, \cdots, y_n) = P(Y_1=y_1) \cdots P(Y_n=y_n) = \pi^{w}(1-\pi)^{n-w} $$
+
+Cuando se registra el número de éxitos en un determinado número de ensayos, la función de verosimilitud para $\pi$ es simplemente $L(\pi \vert w)=P(W=w)=\binom{n}{w}\pi^w(1-\pi)^{n-w}$. El valor de $\pi$ que maximiza la función de verosimilitud es considerado el valor más plausible para el parámetro y es llamado el estimador de máxima verosimilitud (MLE en inglés).
+
+En este caso, el MLE de $\pi$ es $\hat{\pi}=w/n$, la proporción observada de éxitos. Ya que $\bar{\pi}$ puede variar de muestra a muestra, es un estadístico y tiene su correspondiente distribución de probabilidad. Se puede mostrar que $\hat{\pi}$ tiene una distribución aproximadamente normal para muestras suficientemente grandes. La media es $\pi$ y la varianza se calcula:
+
+\begin{align*}
+\widehat{Var}(\hat{\pi}) & =\restr{-E \left\{ \dfrac{\partial^2 log [L(\pi \vert W)]}{\partial \pi^2}  \right\}^{-1}}{\pi = \hat{\pi}} \\
+                     & = \restr{\left[ \dfrac{n}{\pi} - \dfrac{n}{1-\pi} \right]}{\pi = \hat{\pi}} \\
+                     & = \dfrac{\hat{\pi}(1-\hat{\pi})}{n}
+\end{align*}
+
+Notación $\hat{\pi} \sim N(\pi,\widehat{Var}(\hat{\pi}))$.
+
+\textbf{Intervalo de confianza de Wald}
+
+Utilizando esta distribución normal, podemos tratar a $\dfrac{\hat{\pi}-\pi}{\sqrt{\widehat{Var}(\hat{\pi})}}$ como aproximadamente normal. Por ello, para $0<\alpha<1$ se tiene
+$$P \left( Z_{\alpha/2} < \dfrac{\hat{\pi}-\pi}{\sqrt{\widehat{Var}(\hat{\pi})}} < Z_{1- \alpha/2} \right) \approx 1- \alpha$$
+donde $Z_{\alpha}$ es el $\alpha$-ésimo cuantil de una distribución normal estándar. Reorganizando términos:
+$$ P \left( \hat{\pi} - Z_{1- \alpha/2} \sqrt{\widehat{Var}(\hat{\pi})} < \pi < \hat{\pi} + Z_{1- \alpha/2} \sqrt{\widehat{Var}(\hat{\pi})}  \right) \approx 1 - \alpha  $$
+Entonces, ahora tenemos una probabilidad aproximada que tiene el parámetro $\pi$ centrado entre dos estadísticos. Cuando se reemplazan $\hat{\pi}$ y $\widehat{Var}(\hat{\pi})$ con los valores observados de la muestra, se obtiene un intervalo de confianza del $(1- \alpha)100\%$ para $\pi$
+$$ \hat{\pi}-Z_{1- \alpha/2}\sqrt{\hat{\pi}(1- \hat{\pi})/n} < \pi < \hat{\pi}+Z_{1- \alpha/2}\sqrt{\hat{\pi}(1- \hat{\pi})/n} $$
+Los intervalos de confianza basados en la aproximación a la normal de los MLE's son llamados "Intervalos de confianza de Wald".
+
+Cuando $w$ está cerca de $0$ o $n$, ocurren dos problemas:
+\begin{enumerate}
+  \item Los límites calculados podrían ser menores a $0$ o mayores a $1$.
+  \item Cuando $w$ es $0$ o $1$, $\sqrt{\hat{\pi}(1-\hat{\pi})}=0$ para $n>0$. Esto implica que los límites inferior y superior son iguales.
+\end{enumerate}
+
+Supongamos que $w=4$ éxitos son observados en $n=10$ ensayos. El intervalo de Wald para $\pi$ es $0.0964 < \pi < 0.7036$.
+```{r}
+w<-4
+n<-10
+alpha<-0.05
+pi.hat<-w/n
+var.wald<-pi.hat*(1-pi.hat)/n
+lower<-pi.hat - qnorm(p = 1-alpha/2) * sqrt(var.wald)
+upper<-pi.hat + qnorm(p = 1-alpha/2) * sqrt(var.wald)
+round(data.frame(lower, upper), 4)
+```
+O bien
+```{r}
+round(pi.hat + qnorm(p = c(alpha/2, 1-alpha/2)) * sqrt(var.wald),4)
+```
+Este intervalo es algo extenso, sin embargo da información de un rango para $\pi$ que posiblemente sea útil en prueba de hipótesis. Por ejemplo, una prueba de $H_0:\pi=0.5$ contra $H_a:\pi \neq 0.5$ no rechazaría $H_0$ puesto que $0.5$ se encuentra en este rango. Pero si la prueba fuera $H_0:\pi = 0.8$ contra $H_a:\pi \neq 0.8$, hay evidencia para rechazar la hipótesis nula.
+
+
+\textbf{Intervalo de confianza de Wilson}:
+
+Cuando $n<40$ se suele recomendar usar el intervalo de Wilson, el cual se obtiene a partir del estadístico de prueba 
+$$ Z_0 = \cfrac{\hat{\pi}-\pi_0}{\sqrt{\pi_0(1-\pi_0)/n}},$$
+el cual es llamado \emph{estad\'istico de prueba score}; se utiliza frecuentemente en la prueba de $H_0: \pi=\pi_0$ contra $H_a:\pi \neq \pi_0$, donde $0<\pi_0 <1$. Se puede aproximar la distribución de $Z_0$ a la distribución normal estándar para obtener $P(-Z_{1- \alpha/2}<Z_0<Z_{1-\alpha/2}) \approx 1 - \alpha$. Ya que el intervalo de Wilson está basado en una prueba "score", comunmente es referido por \emph{intervalo score}.
+
+El intervalo de Wilson de $(1-\alpha)100\%$ es
+$$ \tilde{\pi} \pm \dfrac{Z_{1-\alpha}\sqrt{n}}{n+Z_{1-\alpha/2}^2} \sqrt{\hat{\pi}(1-\hat{\pi})+\cfrac{Z_{1-\alpha/2}^2}{4n}},$$
+donde 
+$$ \tilde{\pi}=\cfrac{w+Z_{1-\alpha/2}^2/2}{n+Z_{1-\alpha/2}^2/2}$$
+Obsérvese que el intervalo de Wilson siempre tiene límites entre $0$ y $1$.
+
+
+\textbf{Intervalo de confianza de Agresti-Coull}:
+
+Este intervalo es recomendado cuando $n \geq 40$, la fórmula está dada por:
+$$ \tilde{\pi}-Z_{1-\alpha/2} \sqrt{\cfrac{\tilde{\pi}(1-\tilde{\pi})}{n+Z_{1-\alpha/2}^2}}< \pi <  \tilde{\pi}+Z_{1-\alpha/2} \sqrt{\cfrac{\tilde{\pi}(1-\tilde{\pi})}{n+Z_{1-\alpha/2}^2}}$$
+
+Supongamos también que $w=4$ éxitos son observados en $n=10$ ensayos. En R:
+```{r}
+p.tilde<-(w + qnorm(p = 1-alpha/2)^2 /2) / (n + qnorm(p = 1-alpha/2)^2)
+p.tilde
+
+# Intervalo de Wilson
+round(p.tilde + qnorm(p = c(alpha/2, 1-alpha/2)) * sqrt(n) / (n+qnorm(p = 1-alpha/2)^2) *
+        sqrt(pi.hat*(1-pi.hat) + qnorm(p = 1-alpha/2)^2/(4*n)),4)
+
+# Intervalo de Agresti-Coull
+var.ac<-p.tilde*(1-p.tilde) / (n+qnorm(p = 1-alpha/2)^2)
+round(p.tilde + qnorm(p = c(alpha/2, 1-alpha/2)) * sqrt(var.ac),4)
+
+# qnorm(p=c(alpha/2,1-alpha/2))
+```
+
+Se puede simplificar todavía más el trabajo haciendo uso de la paquetería "binom":
+```{r}
+library(binom)
+binom.confint(x = w, n = n, conf.level = 1-alpha, methods = "all")
+
+```
+También se pueden obtener los intervalos uno a la vez y guardarlos en objetos
+```{r}
+# Intervalo Agresti-Coull
+save.ci<-binom.confint(x = w, n = n, conf.level = 1-alpha, methods = "ac")
+save.ci
+```
+

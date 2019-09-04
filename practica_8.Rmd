@@ -1,0 +1,110 @@
+---
+title: "Practica 8"
+author: "Eva Mar?a L?pez"
+date: "17 de abril de 2018"
+output: html_document
+---
+#1.
+```{r}
+
+#install.packages("MASS")
+library("MASS")
+train<-rbind.data.frame(Pima.tr,Pima.tr2)
+
+
+Pima.tr<-Pima.tr
+Pima.tr2<-Pima.tr2
+test<-data.frame(Pima.te)
+
+train$type<-as.numeric(train$type)-1
+train
+```
+```{r}
+
+NA.values<-colSums(is.na(train),na.rm = TRUE)
+NA.values
+```
+#2.
+
+```{r}
+pairs(train[1:7])
+```
+
+
+
+#3.
+a)
+```{r}
+#Modelo logit
+mod.fit.logit <- glm( type ~ age+bmi, family=binomial(link=logit), data=train)
+
+round(summary(mod.fit.logit)$coefficients,4)
+
+```
+```{r}
+# Probit
+mod.fit.probit <- glm( type ~ age+bmi, family=binomial(link=probit), data=train)
+round(summary(mod.fit.probit)$coefficients,4)
+
+```
+
+
+```{r}
+#Log-log complementario
+mod.fit.cloglog <- glm( type ~ age+bmi, family=binomial(link=cloglog), data=train)
+round(summary(mod.fit.cloglog)$coefficients,4)
+```
+
+b)
+
+```{r}
+#Modelo logit
+mod.fit.logit.in <- glm( type ~ age+bmi+age:bmi, family=binomial(link=logit), data=train)
+
+round(summary(mod.fit.logit.in)$coefficients,4)
+```
+
+```{r}
+mod.fit.probit.in <- glm( type ~ age+bmi+age:bmi, family=binomial(link=probit), data=train)
+round(summary(mod.fit.probit.in)$coefficients,4)
+
+```
+
+```{r}
+#Log-log complementario
+mod.fit.cloglog.in <- glm( type ~ age+bmi+age:bmi, family=binomial(link=cloglog), data=train)
+round(summary(mod.fit.cloglog.in)$coefficients,4)
+```
+
+#4.
+```{r}
+predict.data<-data.frame(age=c(35,35),bmi=c(32,22))
+probit.pi <- predict(mod.fit.probit, newdata=predict.data,type="response" )
+
+logit.pi <- predict(mod.fit.logit, newdata=predict.data,type="response" )
+
+loglog.pi <- predict(mod.fit.cloglog, newdata=predict.data,type="response" )
+
+probab.mod<-data.frame(probit.pi,logit.pi,loglog.pi,row.names=c("bmi=32","bmi=22"))
+probab.mod
+```
+Si la persona de 35 anos presenta un bmi de 32 tiene una probabilidad de casi 35% de padecer diabetes, mientras que una persona de la misma edad pero con un bmi de 22 tiene una probabilidad de casi el 16% de presentar diabetes.
+
+#5.
+```{r}
+predict.data1<-data.frame(age=c(55),bmi=c(37))
+probit.pi.1<- predict(mod.fit.probit, newdata=predict.data1,type="response" )
+
+logit.pi.1 <- predict(mod.fit.logit, newdata=predict.data1,type="response" )
+
+loglog.pi.1 <- predict(mod.fit.cloglog, newdata=predict.data1,type="response" )
+pi.hat<-data.frame(probit.pi.1,logit.pi.1, loglog.pi.1)
+pi.hat
+OR<-pi.hat/(1-pi.hat)
+OR
+```
+
+#6.
+
+No, debido a que los modelos logit, probit y log log complementario  con interacci??n se rechazan ya que el p- value es mayor a nuestro valor de significancia (0.05)  por lo que la variable age:bmi no tiene relaci??n con el modelo.
+

@@ -1,0 +1,36 @@
+---
+title: "Practica 4"
+output: html_document
+---
+
+
+```{r}
+#Ejercicio 1
+f_abs<-function(number1,number2)
+{
+  operacion<-abs(number1-number2)
+  return (operacion)
+}
+```
+
+
+```{r}
+f_logic<-function(valor, vec) 
+{
+ vector<-vec
+ ToF<-valor==vec
+  i<-1
+if(i<=length(vec))
+ {
+  
+   if(ToF[i]!=FALSE){return("TRUE")}
+   i<-i+1
+ }
+
+}
+```
+help("for")
+vector<-c(1,3,6,5,4,8,9)
+length(vector)
+f_logic(55,vector)
+

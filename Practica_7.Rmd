@@ -1,0 +1,137 @@
+---
+title: "Practica 7"
+author: "Eva Mar<c3><ad>a L<c3><b3>pez"
+date: "3/4/2018"
+output:
+  html_document: default
+  pdf_document: default
+---
+#a) listo
+```{r}
+placekick.BW<-read.table("placekick.BW.csv",header=T,sep=",")
+mod.fit<-glm(Good~Distance, family=binomial(link=logit),placekick.BW)
+summary(mod.fit)
+```
+
+```{r}
+pi.hat <- mod.fit$fitted.values
+ci.pi<-function(newdata, mod.fit.obj, alpha){
+  linear.pred<-predict(object = mod.fit.obj, newdata = newdata, type = "link", se = TRUE)
+  CI.lin.pred.lower<-linear.pred$fit - qnorm(p = 1-alpha/2)*linear.pred$se
+  CI.lin.pred.upper<-linear.pred$fit + qnorm(p = 1-alpha/2)*linear.pred$se
+  CI.pi.lower<-exp(CI.lin.pred.lower) / (1 + exp(CI.lin.pred.lower))
+  CI.pi.upper<-exp(CI.lin.pred.upper) / (1 + exp(CI.lin.pred.upper))
+  list(lower = CI.pi.lower, upper = CI.pi.upper)
+}
+plot(x =placekick.BW$Distance , y =pi.hat, xlab = "Distance", ylab = "Probabilididad",
+     panel.first = grid(col = "gray", lty = "dotted"))
+curve(expr = ci.pi(newdata = data.frame(Distance = x ), mod.fit.obj = mod.fit, alpha = 0.05)$lower, col = "blue", 
+      lty = "dotdash", add = TRUE, xlim = c(18, 60))
+
+curve(expr = ci.pi(newdata = data.frame(Distance = x), mod.fit.obj = mod.fit, alpha = 0.05)$upper, col = "blue", 
+      lty = "dotdash", add = TRUE, xlim = c(18, 60))
+```
+#b)
+
+listo
+
+```{r}
+mod.fit.b<-glm(Good~Distance+Weather+Wind15+Temperature+Grass+Pressure+Ice, family=binomial(link=logit),placekick.BW)
+summary(mod.fit.b)
+```
+#c)
+listo
+```{r}
+library(car)
+Anova(mod.fit.b)
+```
+De acuerdo con el modelo propuesto en el que se toman como variables independientes la distancia, el tipo de clima, la presencia de viento, asi como la temperatura, el tipo de pasto y hielo, se aplica una prueba de maxima verosimilitud y se observa que las variables de gran importancia para determinar si anota un gol de campo son la distancia,tipo de pasto y hielo si se aplica un grado de significancia de .01
+
+
+#d)
+```{r}
+beta.hat<-mod.fit.b$coefficients[3:5]
+comparison<-c("Clouds vs Inside","Clouds vs Snowrain","Clouds vs Sun","Inside vs Snowrain ","Inside vs Sun","Snowrain vs Sun")
+CvI<-exp(-beta.hat[1])
+CvSn<-exp(-beta.hat[2])
+CvSu<-exp(-beta.hat[3])
+IvSn<-exp(beta.hat[1]-beta.hat[2])
+IvSu<-exp(beta.hat[1]-beta.hat[3])
+SnvSu<-exp(beta.hat[2]-beta.hat[3])
+OR.hat<-c(CvI,CvSn,CvSu,IvSn,IvSu,SnvSu)
+
+library(package = mcprofile) 
+K<-matrix(data = c(0, 0,  -1,  0,  0,  0,0,0,0,0,0,
+                   0, 0,  0,  -1,  0,  0,0,0,0,0,0,
+                   0, 0,  0,  0,  -1,  0,0,0,0,0,0,
+                   0, 0,  1,  -1,  0,  0,0,0,0,0,0,
+                   0, 0, 1,  0,  -1,  0,0,0,0,0,0,
+                   0, 0, 0,  1, -1,  0,0,0,0,0,0),  nrow = 6, ncol = 11, byrow = TRUE)
+linear.combo<-mcprofile(object = mod.fit.b,  CM=K)
+
+ci.log.OR<-confint(object = linear.combo, level = 0.95, adjust = "none")
+
+OR<-data.frame(Weather = comparison,OR.hat =c(CvI,CvSn,CvSu,IvSn,IvSu,SnvSu),OR.CI =exp(ci.log.OR$confint))
+OR
+
+```
+Tomando como referencia el inciso c, sabemos que la variable weather no influye en si el pateador anota o no adem??s todas las razones de momios son cercanas a uno, es decir que existe indiferencia en el tipo de clima con respecto al exito del pateador. Cabe mencionar que en la mayoria de los intervalos se encuentra el valor 1 por lo tanto no existe diferencia notable entre el tipo de clima. Por lo tanto, esta variable no afecta el exito en un gol de campo
+
+#e
+#1)
+```{r}
+
+alpha<-0.05
+predict.data<-data.frame(Distance=49,Weather="Sun",Wind15=0,Temperature="Nice" ,Grass=1, Pressure="Y", Ice=1)
+linear.pred<-predict(object = mod.fit.b, newdata = predict.data, type = "link", se = TRUE)
+pi.hat<-exp(linear.pred$fit)/(1+exp(linear.pred$fit))
+
+CI.lin.pred<-linear.pred$fit + qnorm(p = c(alpha/2, 1-alpha/2))*linear.pred$se
+CI.pi<-exp(CI.lin.pred)/(1+exp(CI.lin.pred))
+
+pi.est<-data.frame(predict.data, pi.hat, lower = CI.pi[1], upper = CI.pi[2])
+pi.est
+
+```
+#2)
+```{r}
+OR.dal<-pi.hat/(1-pi.hat)
+OR.dal
+```
+
+
+#f
+```{r}
+mod.fit.int<-glm(Good~Distance+Wind15+Distance:Wind15, family=binomial(link=logit),placekick.BW)
+mod.fit.int
+```
+#g)
+```{r}
+pi.hat.int <- mod.fit.int$fitted.values
+
+plot(x =placekick.BW$Distance, y =pi.hat.int, xlab = "Distance", ylab = "Probabilidad",
+     panel.first = grid(col = "gray", lty = "dotted"))
+
+```
+#h)
+```{r}
+beta.hat.int<-mod.fit.int$coefficients[-1]
+DvW.0<-exp(mod.fit.int$coefficients[1])
+DvW.1<-exp(mod.fit.int$coefficients[1]-mod.fit.int$coefficients[2])
+DvWI<-exp(mod.fit.int$coefficients[1]-mod.fit.int$coefficients[3])
+WvWI<-exp(mod.fit.int$coefficients[2]-mod.fit.int$coefficients[3])
+placekick.BW$Wind15<-factor(placekick.BW$Wind15)  
+contrasts(placekick.BW$Wind15) 
+OR.int<-c(DvW.0,DvW.1,DvWI,WvWI)
+comp<-c("Distancia vs Wind0","Distancia vs Wind1","Distance vs Distance:Wind","Wind vs Distance:Wind")
+OR.int.df<-data.frame(Comparacion=comp,OR=OR.int)
+OR.int.df
+```
+
+
+#j)
+```{r}
+Anova(mod.fit.int)
+```
+
+Si aplicamos una prueba LR, podemos observar que las unicas variables que presentan importancia en el modelo son la distancia y el viento con un grado de significancia de 0.01 sin tomar como significativa a la interaccion entre la distancia y el viento 
